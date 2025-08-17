@@ -1,0 +1,565 @@
+            // Update scenario displays
+            document.getElementById('retentionMonthlyInvestmentDisplay').textContent = formatCurrency(retentionMonthlyInvestment);
+            document.getElementById('noshowMonthlyInvestmentDisplay').textContent = formatCurrency(noshowMonthlyInvestment);
+            document.getElementById('lateMonthlyInvestmentDisplay').textContent = formatCurrency(lateMonthlyInvestment);<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPI Business Impact Calculator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .inputs {
+            background-color: #e8f4fd;
+        }
+        .calculations {
+            background-color: #fff2e8;
+        }
+        .results {
+            background-color: #e8f5e8;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #34495e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        .input-cell {
+            background-color: #fff;
+            border: 2px solid #3498db;
+        }
+        .formula-cell {
+            background-color: #f8f9fa;
+            font-style: italic;
+        }
+        .result-cell {
+            background-color: #d4edda;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 5px;
+            border: none;
+            background: transparent;
+            font-weight: bold;
+        }
+        .currency {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .warning {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .total-row {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>KPI Business Impact Calculator</h1>
+        
+        <!-- INPUT SECTION -->
+        <div class="section inputs">
+            <h2>📊 Business Inputs (Edit These Values)</h2>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Total Crew Members</td>
+                    <td class="input-cell"><input type="number" id="crewSize" value="100"></td>
+                    <td>Number of front-line workers</td>
+                </tr>
+                <tr>
+                    <td>Number of Crew Chiefs</td>
+                    <td class="input-cell"><input type="number" id="crewChiefs" value="5"></td>
+                    <td>On-site leaders</td>
+                </tr>
+                <tr>
+                    <td>Current Turnover Rate (%)</td>
+                    <td class="input-cell"><input type="number" id="turnoverRate" value="70"></td>
+                    <td>Percentage of people who leave</td>
+                </tr>
+                <tr>
+                    <td>Average Shifts per Person per Month</td>
+                    <td class="input-cell"><input type="number" id="shiftsPerMonth" value="20"></td>
+                    <td>For calculating incident frequencies</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- KPI COSTS SECTION -->
+        <div class="section inputs">
+            <h2>💰 KPI Cost Inputs</h2>
+            <table>
+                <tr>
+                    <th>KPI</th>
+                    <th>Cost per Incident (£)</th>
+                    <th>Estimated Monthly Frequency</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Retention (per person lost)</td>
+                    <td class="input-cell"><input type="number" id="retentionCost" value="2800"></td>
+                    <td class="formula-cell" id="retentionFreq">Auto-calculated</td>
+                    <td>£2000 replacement + £800 training</td>
+                </tr>
+                <tr>
+                    <td>Uncovered Shifts (due to no-show)</td>
+                    <td class="input-cell"><input type="number" id="noshowCost" value="1000"></td>
+                    <td class="input-cell"><input type="number" id="noshowFreq" value="15"></td>
+                    <td>Lost business + client risk (when no last-minute cover found)</td>
+                </tr>
+                <tr>
+                    <td>Late Arrivals (15+ mins)</td>
+                    <td class="input-cell"><input type="number" id="lateCost" value="200"></td>
+                    <td class="input-cell"><input type="number" id="lateFreq" value="25"></td>
+                    <td>% of no-show cost (site disruption)</td>
+                </tr>
+                <tr>
+                    <td>Late Reports (crew chiefs)</td>
+                    <td class="input-cell"><input type="number" id="reportCost" value="100"></td>
+                    <td class="input-cell"><input type="number" id="reportFreq" value="8"></td>
+                    <td>Admin overhead, process delays</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- CLIENT IMPACT SECTION -->
+        <div class="section inputs">
+            <h2>🎯 Client Impact Inputs</h2>
+            <table>
+                <tr>
+                    <th>Impact Area</th>
+                    <th>Total Value at Risk (£)</th>
+                    <th>% Impact from Performance</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Client Retention/Acquisition</td>
+                    <td class="input-cell"><input type="number" id="clientValue" value="500000"></td>
+                    <td class="input-cell"><input type="number" id="clientImpact" value="10"></td>
+                    <td>Annual client value affected by punctuality</td>
+                </tr>
+                <tr>
+                    <td>Quality Feedback Impact</td>
+                    <td class="input-cell"><input type="number" id="qualityValue" value="200000"></td>
+                    <td class="input-cell"><input type="number" id="qualityImpact" value="15"></td>
+                    <td>Contract value affected by work quality</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- CALCULATIONS SECTION -->
+        <div class="section calculations">
+            <h2>🧮 Annual Cost Calculations</h2>
+            <table>
+                <tr>
+                    <th>KPI</th>
+                    <th>Monthly Cost</th>
+                    <th>Annual Cost</th>
+                    <th>Calculation</th>
+                </tr>
+                <tr>
+                    <td>Retention</td>
+                    <td class="currency" id="retentionMonthlyCost">£0</td>
+                    <td class="currency" id="retentionAnnualCost">£0</td>
+                    <td class="formula-cell">Crew Size × Turnover Rate × Cost ÷ 12</td>
+                </tr>
+                <tr>
+                    <td>Uncovered Shifts (due to no-show)</td>
+                    <td class="currency" id="noshowMonthlyCost">£0</td>
+                    <td class="currency" id="noshowAnnualCost">£0</td>
+                    <td class="formula-cell">Frequency × Cost</td>
+                </tr>
+                <tr>
+                    <td>Late Arrivals</td>
+                    <td class="currency" id="lateMonthlyCost">£0</td>
+                    <td class="currency" id="lateAnnualCost">£0</td>
+                    <td class="formula-cell">Frequency × Cost</td>
+                </tr>
+                <tr>
+                    <td>Late Reports</td>
+                    <td class="currency" id="reportMonthlyCost">£0</td>
+                    <td class="currency" id="reportAnnualCost">£0</td>
+                    <td class="formula-cell">Frequency × Cost</td>
+                </tr>
+                <tr>
+                    <td>Client Impact - Punctuality</td>
+                    <td class="currency" id="clientMonthlyCost">£0</td>
+                    <td class="currency" id="clientAnnualCost">£0</td>
+                    <td class="formula-cell">Client Value × Impact % ÷ 12</td>
+                </tr>
+                <tr>
+                    <td>Client Impact - Quality</td>
+                    <td class="currency" id="qualityMonthlyCost">£0</td>
+                    <td class="currency" id="qualityAnnualCost">£0</td>
+                    <td class="formula-cell">Quality Value × Impact % ÷ 12</td>
+                </tr>
+                <tr class="total-row">
+                    <td>TOTAL BUSINESS IMPACT</td>
+                    <td class="currency" id="totalMonthlyCost">£0</td>
+                    <td class="currency" id="totalAnnualCost">£0</td>
+                    <td>Sum of all KPI costs</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- INCENTIVE MODELING SECTION -->
+        <div class="section inputs">
+            <h2>🎁 Incentive Program Design</h2>
+            <table>
+                <tr>
+                    <th>Incentive Program</th>
+                    <th>Eligible People</th>
+                    <th>Monthly Incentive per Person (£)</th>
+                    <th>% Who Qualify/Receive</th>
+                    <th>Monthly Investment</th>
+                    <th>Annual Investment</th>
+                </tr>
+                <tr>
+                    <td><strong>Retention Bonus</strong><br><small>Monthly bonus for staying employed</small></td>
+                    <td class="input-cell"><input type="number" id="retentionEligible" value="100"></td>
+                    <td class="input-cell"><input type="number" id="retentionAmountPer" value="25"></td>
+                    <td class="input-cell"><input type="number" id="retentionQualifyPercent" value="85"></td>
+                    <td class="currency" id="retentionMonthlyCalc">£0</td>
+                    <td class="currency" id="retentionAnnualCalc">£0</td>
+                </tr>
+                <tr>
+                    <td><strong>Attendance Bonus</strong><br><small>Monthly bonus for perfect/near-perfect attendance</small></td>
+                    <td class="input-cell"><input type="number" id="attendanceEligible" value="100"></td>
+                    <td class="input-cell"><input type="number" id="attendanceAmountPer" value="15"></td>
+                    <td class="input-cell"><input type="number" id="attendanceQualifyPercent" value="70"></td>
+                    <td class="currency" id="attendanceMonthlyCalc">£0</td>
+                    <td class="currency" id="attendanceAnnualCalc">£0</td>
+                </tr>
+                <tr>
+                    <td><strong>Last-Minute Coverage</strong><br><small>Bonus per shift covered on short notice</small></td>
+                    <td class="input-cell"><input type="number" id="coverageEligible" value="100"></td>
+                    <td class="input-cell"><input type="number" id="coverageAmountPer" value="30"></td>
+                    <td class="input-cell"><input type="number" id="coverageQualifyPercent" value="20"></td>
+                    <td class="currency" id="coverageMonthlyCalc">£0</td>
+                    <td class="currency" id="coverageAnnualCalc">£0</td>
+                </tr>
+                <tr>
+                    <td><strong>Punctuality Bonus</strong><br><small>Monthly bonus for always being on time</small></td>
+                    <td class="input-cell"><input type="number" id="punctualityEligible" value="100"></td>
+                    <td class="input-cell"><input type="number" id="punctualityAmountPer" value="20"></td>
+                    <td class="input-cell"><input type="number" id="punctualityQualifyPercent" value="60"></td>
+                    <td class="currency" id="punctualityMonthlyCalc">£0</td>
+                    <td class="currency" id="punctualityAnnualCalc">£0</td>
+                </tr>
+                <tr>
+                    <td><strong>Crew Chief Report Bonus</strong><br><small>Monthly bonus for timely reports</small></td>
+                    <td class="input-cell"><input type="number" id="reportEligible" value="5"></td>
+                    <td class="input-cell"><input type="number" id="reportAmountPer" value="50"></td>
+                    <td class="input-cell"><input type="number" id="reportQualifyPercent" value="80"></td>
+                    <td class="currency" id="reportMonthlyCalc">£0</td>
+                    <td class="currency" id="reportAnnualCalc">£0</td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>TOTAL INCENTIVE PROGRAM</strong></td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td class="currency" id="totalIncentiveMonthly">£0</td>
+                    <td class="currency" id="totalIncentiveAnnual">£0</td>
+                </tr>
+            </table>
+            <p><em>Note: These calculated investments will automatically update the scenario analysis below.</em></p>
+        </div>
+
+        <!-- SCENARIOS SECTION -->
+        <div class="section results">
+            <h2>🎯 Incentive Investment Scenarios</h2>
+            <table>
+                <tr>
+                    <th rowspan="2">Scenario</th>
+                    <th colspan="2">Monthly</th>
+                    <th colspan="2">Annual</th>
+                    <th rowspan="2">ROI</th>
+                </tr>
+                <tr>
+                    <th>Investment</th>
+                    <th>Savings</th>
+                    <th>Investment</th>
+                    <th>Savings</th>
+                </tr>
+                <tr>
+                    <td><strong>Reduce Turnover to 60%</strong><br><small>Save 10% of crew (10 people)</small></td>
+                    <td class="currency" id="retentionMonthlyInvestmentDisplay">£0</td>
+                    <td class="currency" id="retentionMonthlySavings">£0</td>
+                    <td class="currency" id="retentionAnnualInvestment">£0</td>
+                    <td class="currency" id="retentionAnnualSavings">£0</td>
+                    <td class="result-cell" id="retentionROI">0%</td>
+                </tr>
+                <tr>
+                    <td><strong>Reduce Uncovered Shifts by 50%</strong><br><small>7-8 fewer uncovered shifts per month</small></td>
+                    <td class="currency" id="noshowMonthlyInvestmentDisplay">£0</td>
+                    <td class="currency" id="noshowMonthlySavings">£0</td>
+                    <td class="currency" id="noshowAnnualInvestment">£0</td>
+                    <td class="currency" id="noshowAnnualSavings">£0</td>
+                    <td class="result-cell" id="noshowROI">0%</td>
+                </tr>
+                <tr>
+                    <td><strong>Reduce Late Arrivals by 40%</strong><br><small>10 fewer late incidents per month</small></td>
+                    <td class="currency" id="lateMonthlyInvestmentDisplay">£0</td>
+                    <td class="currency" id="lateMonthlySavings">£0</td>
+                    <td class="currency" id="lateAnnualInvestment">£0</td>
+                    <td class="currency" id="lateAnnualSavings">£0</td>
+                    <td class="result-cell" id="lateROI">0%</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- KEY INSIGHTS -->
+        <div class="section results">
+            <h2>💡 Key Insights</h2>
+            <div id="insights">
+                <p>📈 <strong>Biggest Cost Driver:</strong> <span id="biggestCost">Calculating...</span></p>
+                <p>🎯 <strong>Best ROI Opportunity:</strong> <span id="bestROI">Calculating...</span></p>
+                <p>💰 <strong>Maximum Incentive Budget:</strong> <span id="maxBudget">Calculating...</span></p>
+                <p>⚡ <strong>Cost per Employee:</strong> <span id="costPerEmployee">Calculating...</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatCurrency(amount) {
+            return '£' + Math.round(amount).toLocaleString();
+        }
+
+        function calculateAll() {
+            // Get inputs
+            const crewSize = parseInt(document.getElementById('crewSize').value) || 100;
+            const crewChiefs = parseInt(document.getElementById('crewChiefs').value) || 5;
+            const turnoverRate = parseFloat(document.getElementById('turnoverRate').value) || 70;
+            const shiftsPerMonth = parseInt(document.getElementById('shiftsPerMonth').value) || 20;
+            
+            // KPI costs
+            const retentionCost = parseFloat(document.getElementById('retentionCost').value) || 2800;
+            const noshowCost = parseFloat(document.getElementById('noshowCost').value) || 1000;
+            const noshowFreq = parseInt(document.getElementById('noshowFreq').value) || 15;
+            const lateCost = parseFloat(document.getElementById('lateCost').value) || 200;
+            const lateFreq = parseInt(document.getElementById('lateFreq').value) || 25;
+            const reportCost = parseFloat(document.getElementById('reportCost').value) || 100;
+            const reportFreq = parseInt(document.getElementById('reportFreq').value) || 8;
+            
+            // Client impact
+            const clientValue = parseFloat(document.getElementById('clientValue').value) || 500000;
+            const clientImpact = parseFloat(document.getElementById('clientImpact').value) || 10;
+            const qualityValue = parseFloat(document.getElementById('qualityValue').value) || 200000;
+            const qualityImpact = parseFloat(document.getElementById('qualityImpact').value) || 15;
+
+            // INCENTIVE CALCULATIONS
+            // Retention incentive
+            const retentionEligible = parseInt(document.getElementById('retentionEligible').value) || 100;
+            const retentionAmountPer = parseFloat(document.getElementById('retentionAmountPer').value) || 25;
+            const retentionQualifyPercent = parseFloat(document.getElementById('retentionQualifyPercent').value) || 85;
+            const retentionMonthlyCalc = (retentionEligible * retentionAmountPer * retentionQualifyPercent / 100);
+            const retentionAnnualCalc = retentionMonthlyCalc * 12;
+
+            // Attendance incentive
+            const attendanceEligible = parseInt(document.getElementById('attendanceEligible').value) || 100;
+            const attendanceAmountPer = parseFloat(document.getElementById('attendanceAmountPer').value) || 15;
+            const attendanceQualifyPercent = parseFloat(document.getElementById('attendanceQualifyPercent').value) || 70;
+            const attendanceMonthlyCalc = (attendanceEligible * attendanceAmountPer * attendanceQualifyPercent / 100);
+            const attendanceAnnualCalc = attendanceMonthlyCalc * 12;
+
+            // Coverage incentive
+            const coverageEligible = parseInt(document.getElementById('coverageEligible').value) || 100;
+            const coverageAmountPer = parseFloat(document.getElementById('coverageAmountPer').value) || 30;
+            const coverageQualifyPercent = parseFloat(document.getElementById('coverageQualifyPercent').value) || 20;
+            const coverageMonthlyCalc = (coverageEligible * coverageAmountPer * coverageQualifyPercent / 100);
+            const coverageAnnualCalc = coverageMonthlyCalc * 12;
+
+            // Punctuality incentive
+            const punctualityEligible = parseInt(document.getElementById('punctualityEligible').value) || 100;
+            const punctualityAmountPer = parseFloat(document.getElementById('punctualityAmountPer').value) || 20;
+            const punctualityQualifyPercent = parseFloat(document.getElementById('punctualityQualifyPercent').value) || 60;
+            const punctualityMonthlyCalc = (punctualityEligible * punctualityAmountPer * punctualityQualifyPercent / 100);
+            const punctualityAnnualCalc = punctualityMonthlyCalc * 12;
+
+            // Report incentive
+            const reportEligible = parseInt(document.getElementById('reportEligible').value) || 5;
+            const reportAmountPer = parseFloat(document.getElementById('reportAmountPer').value) || 50;
+            const reportQualifyPercent = parseFloat(document.getElementById('reportQualifyPercent').value) || 80;
+            const reportMonthlyCalc = (reportEligible * reportAmountPer * reportQualifyPercent / 100);
+            const reportAnnualCalc = reportMonthlyCalc * 12;
+
+            // Total incentives
+            const totalIncentiveMonthly = retentionMonthlyCalc + attendanceMonthlyCalc + coverageMonthlyCalc + punctualityMonthlyCalc + reportMonthlyCalc;
+            const totalIncentiveAnnual = totalIncentiveMonthly * 12;
+
+            // Update incentive displays
+            document.getElementById('retentionMonthlyCalc').textContent = formatCurrency(retentionMonthlyCalc);
+            document.getElementById('retentionAnnualCalc').textContent = formatCurrency(retentionAnnualCalc);
+            document.getElementById('attendanceMonthlyCalc').textContent = formatCurrency(attendanceMonthlyCalc);
+            document.getElementById('attendanceAnnualCalc').textContent = formatCurrency(attendanceAnnualCalc);
+            document.getElementById('coverageMonthlyCalc').textContent = formatCurrency(coverageMonthlyCalc);
+            document.getElementById('coverageAnnualCalc').textContent = formatCurrency(coverageAnnualCalc);
+            document.getElementById('punctualityMonthlyCalc').textContent = formatCurrency(punctualityMonthlyCalc);
+            document.getElementById('punctualityAnnualCalc').textContent = formatCurrency(punctualityAnnualCalc);
+            document.getElementById('reportMonthlyCalc').textContent = formatCurrency(reportMonthlyCalc);
+            document.getElementById('reportAnnualCalc').textContent = formatCurrency(reportAnnualCalc);
+            document.getElementById('totalIncentiveMonthly').textContent = formatCurrency(totalIncentiveMonthly);
+            document.getElementById('totalIncentiveAnnual').textContent = formatCurrency(totalIncentiveAnnual);
+
+            // Calculate retention frequency
+            const retentionFreq = Math.round((crewSize * turnoverRate / 100) / 12 * 10) / 10;
+            document.getElementById('retentionFreq').textContent = retentionFreq + ' people/month';
+
+            // Monthly costs
+            const retentionMonthlyCost = (crewSize * turnoverRate / 100 * retentionCost) / 12;
+            const noshowMonthlyCost = noshowFreq * noshowCost;
+            const lateMonthlyCost = lateFreq * lateCost;
+            const reportMonthlyCost = reportFreq * reportCost;
+            const clientMonthlyCost = (clientValue * clientImpact / 100) / 12;
+            const qualityMonthlyCost = (qualityValue * qualityImpact / 100) / 12;
+            const totalMonthlyCost = retentionMonthlyCost + noshowMonthlyCost + lateMonthlyCost + reportMonthlyCost + clientMonthlyCost + qualityMonthlyCost;
+
+            // Update monthly costs
+            document.getElementById('retentionMonthlyCost').textContent = formatCurrency(retentionMonthlyCost);
+            document.getElementById('noshowMonthlyCost').textContent = formatCurrency(noshowMonthlyCost);
+            document.getElementById('lateMonthlyCost').textContent = formatCurrency(lateMonthlyCost);
+            document.getElementById('reportMonthlyCost').textContent = formatCurrency(reportMonthlyCost);
+            document.getElementById('clientMonthlyCost').textContent = formatCurrency(clientMonthlyCost);
+            document.getElementById('qualityMonthlyCost').textContent = formatCurrency(qualityMonthlyCost);
+            document.getElementById('totalMonthlyCost').textContent = formatCurrency(totalMonthlyCost);
+
+            // Annual costs
+            const retentionAnnualCost = retentionMonthlyCost * 12;
+            const noshowAnnualCost = noshowMonthlyCost * 12;
+            const lateAnnualCost = lateMonthlyCost * 12;
+            const reportAnnualCost = reportMonthlyCost * 12;
+            const clientAnnualCost = clientMonthlyCost * 12;
+            const qualityAnnualCost = qualityMonthlyCost * 12;
+            const totalAnnualCost = totalMonthlyCost * 12;
+
+            // Update annual costs
+            document.getElementById('retentionAnnualCost').textContent = formatCurrency(retentionAnnualCost);
+            document.getElementById('noshowAnnualCost').textContent = formatCurrency(noshowAnnualCost);
+            document.getElementById('lateAnnualCost').textContent = formatCurrency(lateAnnualCost);
+            document.getElementById('reportAnnualCost').textContent = formatCurrency(reportAnnualCost);
+            document.getElementById('clientAnnualCost').textContent = formatCurrency(clientAnnualCost);
+            document.getElementById('qualityAnnualCost').textContent = formatCurrency(qualityAnnualCost);
+            document.getElementById('totalAnnualCost').textContent = formatCurrency(totalAnnualCost);
+
+            // Scenarios - Use calculated incentive amounts
+            const retentionMonthlyInvestment = retentionMonthlyCalc;
+            const noshowMonthlyInvestment = attendanceMonthlyCalc + coverageMonthlyCalc; // Attendance + coverage bonuses
+            const lateMonthlyInvestment = punctualityMonthlyCalc;
+
+            // Calculate monthly savings
+            const retentionMonthlySavingsAmount = (crewSize * 0.1 * retentionCost) / 12; // Save 10% of crew monthly
+            const noshowMonthlySavingsAmount = (noshowFreq * 0.5 * noshowCost); // 50% reduction in uncovered shifts monthly
+            const lateMonthlySavingsAmount = (lateFreq * 0.4 * lateCost); // 40% reduction monthly
+
+            // Calculate annual amounts
+            const retentionAnnualInvestment = retentionMonthlyInvestment * 12;
+            const noshowAnnualInvestment = noshowMonthlyInvestment * 12;
+            const lateAnnualInvestment = lateMonthlyInvestment * 12;
+
+            const retentionAnnualSavingsAmount = retentionMonthlySavingsAmount * 12;
+            const noshowAnnualSavingsAmount = noshowMonthlySavingsAmount * 12;
+            const lateAnnualSavingsAmount = lateMonthlySavingsAmount * 12;
+
+            // Update monthly values
+            document.getElementById('retentionMonthlySavings').textContent = formatCurrency(retentionMonthlySavingsAmount);
+            document.getElementById('noshowMonthlySavings').textContent = formatCurrency(noshowMonthlySavingsAmount);
+            document.getElementById('lateMonthlySavings').textContent = formatCurrency(lateMonthlySavingsAmount);
+
+            // Update annual values
+            document.getElementById('retentionAnnualInvestment').textContent = formatCurrency(retentionAnnualInvestment);
+            document.getElementById('noshowAnnualInvestment').textContent = formatCurrency(noshowAnnualInvestment);
+            document.getElementById('lateAnnualInvestment').textContent = formatCurrency(lateAnnualInvestment);
+
+            document.getElementById('retentionAnnualSavings').textContent = formatCurrency(retentionAnnualSavingsAmount);
+            document.getElementById('noshowAnnualSavings').textContent = formatCurrency(noshowAnnualSavingsAmount);
+            document.getElementById('lateAnnualSavings').textContent = formatCurrency(lateAnnualSavingsAmount);
+
+            // Calculate ROI based on annual figures
+            const retentionROI = ((retentionAnnualSavingsAmount - retentionAnnualInvestment) / retentionAnnualInvestment * 100);
+            const noshowROI = ((noshowAnnualSavingsAmount - noshowAnnualInvestment) / noshowAnnualInvestment * 100);
+            const lateROI = ((lateAnnualSavingsAmount - lateAnnualInvestment) / lateAnnualInvestment * 100);
+
+            document.getElementById('retentionROI').textContent = Math.round(retentionROI) + '%';
+            document.getElementById('noshowROI').textContent = Math.round(noshowROI) + '%';
+            document.getElementById('lateROI').textContent = Math.round(lateROI) + '%';
+
+            // Insights
+            const costs = [
+                {name: 'Retention', cost: retentionAnnualCost},
+                {name: 'Uncovered Shifts (no-show)', cost: noshowAnnualCost},
+                {name: 'Late Arrivals', cost: lateAnnualCost},
+                {name: 'Late Reports', cost: reportAnnualCost},
+                {name: 'Client Impact', cost: clientAnnualCost + qualityAnnualCost}
+            ];
+            const biggestCost = costs.reduce((max, curr) => curr.cost > max.cost ? curr : max);
+            
+            const rois = [
+                {name: 'Retention', roi: retentionROI},
+                {name: 'Shift Coverage', roi: noshowROI},
+                {name: 'Late Arrivals', roi: lateROI}
+            ];
+            const bestROI = rois.reduce((max, curr) => curr.roi > max.roi ? curr : max);
+
+            document.getElementById('biggestCost').textContent = biggestCost.name + ' (' + formatCurrency(biggestCost.cost) + '/year)';
+            document.getElementById('bestROI').textContent = bestROI.name + ' (' + Math.round(bestROI.roi) + '% ROI)';
+            document.getElementById('maxBudget').textContent = 'Up to ' + formatCurrency(totalAnnualCost * 0.5) + ' (50% of current costs)';
+            document.getElementById('costPerEmployee').textContent = formatCurrency(totalAnnualCost / (crewSize + crewChiefs)) + ' per person per year';
+        }
+
+        // Add event listeners to all inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', calculateAll);
+            });
+            calculateAll(); // Initial calculation
+        });
+    </script>
+</body>
+</html>
